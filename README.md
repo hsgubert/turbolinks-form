@@ -63,8 +63,11 @@ Turbolinks-form will trigger only a subset of the (Turbolink events)[https://git
 
 * `turbolinks:load` fires after the page has finished loading (after rendering and after running inline script tags).
 
-#### Cache
+#### Caches
 Turbolinks-form ignores Turbolinks caches. It does not populate or uses cache.
+
+#### Browser history
+Turbolinks-form ignores browser history. It does not push any new state nor replaces the last state.
 
 ## License
 
