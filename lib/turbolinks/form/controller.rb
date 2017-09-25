@@ -3,25 +3,30 @@ module Turbolinks::Form
     extend ActiveSupport::Concern
 
     included do
-      send :rescue_from, Exception, with: :turboboost_form_error_handler
+      # send :rescue_from, Exception, with: :turbolinks_form_error_handler
+
+      before_filter :set_turbolinks_form_header
     end
 
-    def turboboost_form_error_handler(error)
-      if turbolinks_form_request?
-        response.headers['turbolinks-form-render'] = '1'
-      end
-      raise error
-    end
+    private
 
-    def render(*args, &block)
+    def set_turbolinks_form_header
       if turbolinks_form_request?
+        # response.set_header("turbolinks-form-render", '1')
         response.headers['turbolinks-form-render'] = '1'
       end
-      super
     end
 
     def turbolinks_form_request?
       (request.post? || request.put? || request.patch?) && request.xhr? && request.headers['turbolinks-form-submit']
     end
+
+    # def turbolinks_form_error_handler(error)
+    #   if turbolinks_form_request?
+    #     # response.set_header("turbolinks-form-render", '1')
+    #     response.headers['turbolinks-form-render'] = '1'
+    #   end
+    #   raise error
+    # end
   end
 end

@@ -9,7 +9,6 @@ module Turbolinks::Form
       if options.keys.include?(:turbolinks_form) && options[:turbolinks_form]
         options[:remote] = true
         options[:data] ||= {}
-        options[:data][:type] = 'html'
         options[:data][:turbolinks_form] = true
       end
 
@@ -23,7 +22,6 @@ module Turbolinks::Form
       if options.keys.include?(:turbolinks_form) && options[:turbolinks_form]
         options[:remote] = true
         options[:data] ||= {}
-        options[:data][:type] = 'html'
         options[:data][:turbolinks_form] = true
       end
 

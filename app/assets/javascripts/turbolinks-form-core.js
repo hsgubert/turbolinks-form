@@ -21,19 +21,28 @@
 // This code is only activated if:
 //  1) HTTP status code is 422 unprocessable_entity
 //  2) Response has the 'turbolinks-form-render' header
-//  3) Response Content-type is 'text/html' and this header is present
 //
 // PS: it is also activated on errors with code 500, so that we can know the
 //     error is happening and not that the site is unresponsive
 $(function() {
   $(document).on("ajax:error", function(e, response) {
-    var isError500 = (response.status == 500)
-    var isFormErrorWithHtmlResponse = (response.status == 422 && response.getResponseHeader('turbolinks-form-render') && response.getResponseHeader('Content-type').includes('text/html'))
-    if (!isError500 && !isFormErrorWithHtmlResponse) { return; }
+    // dispatches turbolinks event
+    Turbolinks.dispatch('turbolinks:request-end', {data: {xhr: response}});
 
+    var isError500 = (response.status == 500)
+    var isFormErrorResponse = (response.status == 422 && response.getResponseHeader('turbolinks-form-render'));
+    if (!isError500 && !isFormErrorResponse) { return; }
+
+    // parses response
     var newDom = new DOMParser().parseFromString(response.responseText, "text/html");
 
+    // dispatches turbolinks event
+    Turbolinks.dispatch('turbolinks:before-render', {data: {newBody: newDom.body}});
+
     document.body = newDom.body;
+
+    // dispatches turbolinks event
+    Turbolinks.dispatch('turbolinks:render');
 
     // get all script tags, and replace them by a new version with the same
     // content. This makes them run.
@@ -54,6 +63,9 @@ $(function() {
     // adds the turbolinks-form-submit header for forms with data-turbolinks-form attribute being submitted,
     // so the controller knows it has to put the turbolinks-form-render header on the response
     xhr.setRequestHeader('turbolinks-form-submit', '1');
-  }
+
+    // dispatches turbolinks event
+    Turbolinks.dispatch('turbolinks:request-start', {data: {xhr: xhr}});
+  });
 
 });
