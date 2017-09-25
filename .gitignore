@@ -1,0 +1,13 @@
+/.bundle/
+/.yardoc
+/Gemfile.lock
+/_yardoc/
+/coverage/
+/doc/
+/pkg/
+/spec/reports/
+/spec/fixtures/shards.yml
+/spec/fixtures/schemas
+/tmp/
+.byebug_history
+turbolinks-form-*.*.*.gem
