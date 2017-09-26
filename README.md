@@ -1,4 +1,8 @@
 # turbolinks-form
+
+[![Dependency Status](https://gemnasium.com/badges/github.com/hsgubert/turbolinks-form.svg)](https://gemnasium.com/github.com/hsgubert/turbolinks-form)
+[![Gem Version](https://badge.fury.io/rb/turbolinks-form.svg)](https://badge.fury.io/rb/turbolinks-form)
+
 Turbolinks 5 extension to render form errors after a submit.
 
 ## Installation
