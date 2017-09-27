@@ -21,9 +21,9 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency 'rails', '~> 4.2', '~> 5.0', '~> 5.1'
-  spec.add_runtime_dependency 'turbolinks', '~> 5.0', '>= 5.0.0'
-  spec.add_runtime_dependency 'jquery-rails', '~> 4.3', '>= 4.3.0'
+  spec.add_runtime_dependency 'rails', '>= 4.2'
+  spec.add_runtime_dependency 'turbolinks', '~> 5.0'
+  spec.add_runtime_dependency 'jquery-rails', '~> 4.3'
 
   spec.add_development_dependency 'bundler', '~> 1.15'
   spec.add_development_dependency 'rake', '~> 12.0'
