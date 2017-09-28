@@ -24,6 +24,19 @@ $(function() {
     // parses response
     var newDom = new DOMParser().parseFromString(response.responseText, "text/html");
 
+    // Some browsers (PhantomJS and earlier versions of Firefox and IE) don't implement
+    // parsing from string for "text/html" format. So we use an alternative method
+    // described here:
+    // https://developer.mozilla.org/en-US/Add-ons/Code_snippets/HTML_to_DOM#Parsing_Complete_HTML_to_DOM
+    if (newDom == null) {
+      newDom = document.implementation.createHTMLDocument("document");
+      newDom.documentElement.innerHTML = response.responseText;
+    }
+
+    if (newDom == null) {
+      console.error("turbolinks-form was not able to parse response from server.");
+    }
+
     // dispatches turbolinks event
     Turbolinks.dispatch('turbolinks:before-render', {data: {newBody: newDom.body}});
 
