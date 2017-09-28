@@ -40,6 +40,20 @@ $(function() {
     // dispatches turbolinks event
     Turbolinks.dispatch('turbolinks:before-render', {data: {newBody: newDom.body}});
 
+    // console.log('before-render')
+
+    // Removes/saves all script tags contents.
+    // Most browsers don't run the new <script> tags when we replace the page body,
+    // but some do (like PhantomJS). So we clear all script tags to ensure nothing
+    // will run on any browser.
+    var newBodyScripts = newDom.body.getElementsByTagName('script');
+    var newBodyScriptContents = [];
+    for (var i=0; i<newBodyScripts.length; i++) {
+      var script = newBodyScripts[i];
+      newBodyScriptContents.push(script.text);
+      script.text = "";
+    }
+
     // if there is no target, replaces whole body
     var target;
     if (!response.getResponseHeader('turbolinks-form-render-target')) {
@@ -58,14 +72,15 @@ $(function() {
     // dispatches turbolinks event
     Turbolinks.dispatch('turbolinks:render');
 
-    // get all script tags, and replace them by a new version with the same
-    // content. This makes them run.
-    var bodyScriptTags = target.getElementsByTagName('script');
-    for (var i=0; i<bodyScriptTags.length; i++) {
+    // console.log('render')
+
+    // Add scripts to body, so they are run on any browser
+    var bodyScripts = target.getElementsByTagName('script');
+    for (var i=0; i<bodyScripts.length; i++) {
+      var script = bodyScripts[i];
       var newScript = document.createElement("script");
-      var oldScript = bodyScriptTags[i];
-      newScript.text = oldScript.text;
-      oldScript.parentNode.replaceChild(newScript, oldScript);
+      newScript.text = newBodyScriptContents[i];
+      script.parentNode.replaceChild(newScript, script);
     }
 
     Turbolinks.dispatch("turbolinks:load");
