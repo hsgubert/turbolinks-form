@@ -3,7 +3,11 @@ module Turbolinks::Form
     extend ActiveSupport::Concern
 
     included do
-      before_filter :set_turbolinks_form_header
+      if respond_to?(:before_action)
+        before_action :set_turbolinks_form_header
+      else
+        before_filter :set_turbolinks_form_header
+      end  
     end
 
     # convenience method
