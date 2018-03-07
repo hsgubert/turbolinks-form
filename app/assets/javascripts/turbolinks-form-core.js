@@ -83,8 +83,8 @@ $(function() {
       script.parentNode.replaceChild(newScript, script);
     }
 
-    Turbolinks.dispatch("turbolinks:load");
     scrollTo(0, 0);
+    Turbolinks.dispatch("turbolinks:load");
   }
 
 
