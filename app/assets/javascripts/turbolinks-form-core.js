@@ -19,7 +19,7 @@
 
 var TurbolinksForm = function(){};
 
-TurbolinksForm.handleResponse = function(response) {
+TurbolinksForm.handleResponse = function(response, renderingError) {
   // parses response
   var newDom = new DOMParser().parseFromString(response.responseText, "text/html");
 
@@ -41,6 +41,14 @@ TurbolinksForm.handleResponse = function(response) {
 
   // console.log('before-render')
 
+  // replaces whole head if rendering an error page. Useful when handling 500 error, since applications
+  // usually have a whole different set of styles for this page. This is consistent with Turbolinks.
+  if (renderingError) {
+    // head replacement doesn't work the same way as body replacement. We must use the replaceChild()
+    // function for it to work effectively
+    document.documentElement.replaceChild(newDom.head, document.head);
+  }
+
   // Removes/saves all script tags contents.
   // Most browsers don't run the new <script> tags when we replace the page body,
   // but some do (like PhantomJS). So we clear all script tags to ensure nothing
@@ -55,7 +63,7 @@ TurbolinksForm.handleResponse = function(response) {
 
   // if there is no target, replaces whole body
   var target;
-  if (!response.getResponseHeader('turbolinks-form-render-target')) {
+  if (!response.getResponseHeader('turbolinks-form-render-target') || renderingError) {
     document.body = newDom.body;
     target = document.body;
   } else {
@@ -91,22 +99,33 @@ TurbolinksForm.handleResponse = function(response) {
 //  1) HTTP status code is 422 unprocessable_entity
 //  2) Response has the 'turbolinks-form-render' header
 //
-// PS: it is also activated on errors with code 500, so that we can know the
+// PS: it is also activated on errors with code 500 or 404, so that we can know the
 //     error is happening and not that the site is unresponsive
 $(document).on("ajax:error", function(e, response) {
   // dispatches turbolinks event
   Turbolinks.dispatch('turbolinks:request-end', {data: {xhr: response}});
 
-  var isError500 = (response.status == 500)
+  // handles form error (replaces body/target only, does not touch head)
   var isFormErrorResponse = (response.status == 422 && response.getResponseHeader('turbolinks-form-render'));
-  if (isError500 || isFormErrorResponse) {
+  if (isFormErrorResponse) {
     TurbolinksForm.handleResponse(response);
+    return;
+  }
+
+  // replaces whole body and whole head when a true error occurs
+  var isError500 = (response.status == 500)
+  var isError404 = (response.status == 404)
+  if (isError500 || isError404) {
+    TurbolinksForm.handleResponse(response, true);
+    return;
   }
 });
 
 // This code is only activated if:
 //  1) HTTP status code is 200
 //  2) Response has 'turbolinks-form-render' header and 'turbolinks-form-render-when-success' header
+//
+// This handling is useful when we dont want a redirect after a successful submit
 $(document).on("ajax:success", function(e, data, status, response) {
   // dispatches turbolinks event
   Turbolinks.dispatch('turbolinks:request-end', {data: {xhr: response}});
