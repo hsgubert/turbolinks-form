@@ -1,9 +1,14 @@
 # turbolinks-form
 
-[![Dependency Status](https://gemnasium.com/badges/github.com/hsgubert/turbolinks-form.svg)](https://gemnasium.com/github.com/hsgubert/turbolinks-form)
 [![Gem Version](https://badge.fury.io/rb/turbolinks-form.svg)](https://badge.fury.io/rb/turbolinks-form)
 
 Turbolinks 5 extension to render form errors after a submit.
+
+## Requirements
+
+* Rails >= 4.3 (tested with 4.3, 5.0 and 5.1)
+* [Turbolinks 5] (https://github.com/turbolinks/turbolinks)
+* Either [rails-ujs](https://github.com/rails/rails-ujs) (included in Rails 5.1) or [jquery-ujs](https://github.com/rails/jquery-ujs)
 
 ## Installation
 
@@ -21,8 +26,15 @@ Add the javascript to your `application.js` or to your `vendor.js`
 //= require turbolinks-form
 ```
 
-This will automatically include jQuery and Turbolinks if not included already.
+This will automatically include Turbolinks if not included already.
 
+You must have included either rails-ujs or jquery-ujs in your assets. This gem does not include any of them as to let you choose your preference.
+``` javascript
+//= require jquery_ujs
+```
+``` javascript
+//= require rails-ujs
+```
 
 ## Basic Usage
 
@@ -100,9 +112,14 @@ Turbolinks-form will trigger only a subset of the (Turbolink events)[https://git
 #### Graceful Degradation
 When the request is not `xhr`, `turbolinks-form` degrades gracefully to regular rendering (with full page load).
 
-#### Browser history
+#### Browser History
 Turbolinks-form ignores browser history. It does not push any new state nor replaces the last state.
 
-## License
+#### Error Handling
+When your server responds with an error 500 or 404, turbolinks-form replaces the whole page (head
+and body). The reason we do this is that applications usually have a whole different set of styles
+for error pages and probably need the head of the page to be replaced as well as the body. This
+behavior is consistent with Turbolinks.
 
+## License
 The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).

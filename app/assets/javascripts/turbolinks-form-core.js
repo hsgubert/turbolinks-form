@@ -13,8 +13,8 @@
 // This doesn't mean it does ALL what turbolinks does. For example, we don't
 // merge script tags from old and new page <head> elements.
 // This also doesn't change the browser history or does any change to the URL.
-// The reason we don't do such things is simply that this is a solution to
-// render errors in forms, and usually we render the same page/form rendered
+// The reason we don't do such things is simply that this gem is a solution to
+// render errors in forms, and usually we render the same page/form we had rendered
 // before the submit.
 
 var TurbolinksForm = function(){};
