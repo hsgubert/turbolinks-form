@@ -7,7 +7,7 @@ Turbolinks 5 extension to render form errors after a submit.
 ## Requirements
 
 * Rails >= 4.3 (tested with 4.3, 5.0 and 5.1)
-* [Turbolinks 5] (https://github.com/turbolinks/turbolinks)
+* [Turbolinks 5](https://github.com/turbolinks/turbolinks)
 * Either [rails-ujs](https://github.com/rails/rails-ujs) (included in Rails 5.1) or [jquery-ujs](https://github.com/rails/jquery-ujs)
 
 ## Installation
