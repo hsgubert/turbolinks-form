@@ -30,23 +30,23 @@ TurbolinksForm.on = function(eventHandlerOwner, event, delegateSelector, handler
     delegateSelector = undefined;
   }
 
-  eventHandlerOwner.addEventListener(event, function(e) {
-      if (delegateSelector) {
-        // goes up the dom tree searching for the delegate
-        var currentTarget = e.target;
-        while (!currentTarget.matches(delegateSelector) && currentTarget !== this) {
-          currentTarget = currentTarget.parentElement;
-        }
+  $(eventHandlerOwner).on(event, function(e) {
+    if (delegateSelector) {
+      // goes up the dom tree searching for the delegate
+      var currentTarget = e.target;
+      while (!currentTarget.matches(delegateSelector) && currentTarget !== this) {
+        currentTarget = currentTarget.parentElement;
+      }
 
-        // if delegate found, call the handler there
-        if (currentTarget.matches(delegateSelector)) {
-          handler.call(currentTarget, e);
-        }
+      // if delegate found, call the handler there
+      if (currentTarget.matches(delegateSelector)) {
+        handler.apply(currentTarget, arguments);
       }
-      // if there is no delegation, just call the handler directly
-      else {
-        handler.call(eventHandlerOwner, e);
-      }
+    }
+    // if there is no delegation, just call the handler directly
+    else {
+      handler.apply(eventHandlerOwner, arguments);
+    }
   });
 }
 
@@ -206,9 +206,9 @@ TurbolinksForm.on(document, "ajax:beforeSend", "[data-turbolinks-form]", functio
   // When using rails-ujs (instead of jquery-ujs) this handler receives a single event parameter
   // and other parameters must be extracted from e.detail
   // Ref: https://edgeguides.rubyonrails.org/working_with_javascript_in_rails.html#rails-ujs-event-handlers
-  if (!xhr)
+  if (!xhr && e.detail)
     var xhr = e.detail[0];
-  if (!options)
+  if (!options && e.detail)
     var options = e.detail[1];
 
   // adds the turbolinks-form-submit header for forms with data-turbolinks-form attribute being submitted,
