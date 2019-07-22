@@ -19,9 +19,40 @@
 
 var TurbolinksForm = function(){};
 
-TurbolinksForm.handleResponse = function(response, renderingError) {
+// Attach an event handler function for one or more events to the selected elements.
+// This method is inspired by JQuery on() and was created so that we could remove the dependency
+// on JQuery.
+// Ref: https://stackoverflow.com/questions/25248286/native-js-equivalent-to-jquery-delegation#answer-46595740
+TurbolinksForm.on = function(eventHandlerOwner, event, delegateSelector, handler) {
+  // handles call with 3 arguments
+  if (!handler && delegateSelector) {
+    handler = delegateSelector;
+    delegateSelector = undefined;
+  }
+
+  eventHandlerOwner.addEventListener(event, function(e) {
+      if (delegateSelector) {
+        // goes up the dom tree searching for the delegate
+        var currentTarget = e.target;
+        while (!currentTarget.matches(delegateSelector) && currentTarget !== this) {
+          currentTarget = currentTarget.parentElement;
+        }
+
+        // if delegate found, call the handler there
+        if (currentTarget.matches(delegateSelector)) {
+          handler.call(currentTarget, e);
+        }
+      }
+      // if there is no delegation, just call the handler directly
+      else {
+        handler.call(eventHandlerOwner, e);
+      }
+  });
+}
+
+TurbolinksForm.handleResponse = function(xhr, renderingError) {
   // parses response
-  var newDom = new DOMParser().parseFromString(response.responseText, "text/html");
+  var newDom = new DOMParser().parseFromString(xhr.responseText, "text/html");
 
   // Some browsers (PhantomJS and earlier versions of Firefox and IE) don't implement
   // parsing from string for "text/html" format. So we use an alternative method
@@ -29,7 +60,7 @@ TurbolinksForm.handleResponse = function(response, renderingError) {
   // https://developer.mozilla.org/en-US/Add-ons/Code_snippets/HTML_to_DOM#Parsing_Complete_HTML_to_DOM
   if (newDom == null) {
     newDom = document.implementation.createHTMLDocument("document");
-    newDom.documentElement.innerHTML = response.responseText;
+    newDom.documentElement.innerHTML = xhr.responseText;
   }
 
   if (newDom == null) {
@@ -63,16 +94,25 @@ TurbolinksForm.handleResponse = function(response, renderingError) {
 
   // if there is no target, replaces whole body
   var target;
-  if (!response.getResponseHeader('turbolinks-form-render-target') || renderingError) {
+  if (!xhr.getResponseHeader('turbolinks-form-render-target') || renderingError) {
     document.body = newDom.body;
     target = document.body;
-  } else {
-    target = $(response.getResponseHeader('turbolinks-form-render-target'), document.body)[0];
-    while (target.firstChild) {
-      target.removeChild(target.firstChild);
+  }
+  // if there is a specific target
+  else {
+    target = document.body.querySelector(xhr.getResponseHeader('turbolinks-form-render-target'));
+    if (target) {
+      // clears target contents
+      while (target.firstChild) {
+        target.removeChild(target.firstChild);
+      }
+      // fills target with new content
+      while (newDom.body.firstChild) {
+        target.appendChild(newDom.body.removeChild(newDom.body.firstChild));
+      }
     }
-    while (newDom.body.firstChild) {
-      target.appendChild(newDom.body.removeChild(newDom.body.firstChild));
+    else {
+      console.warn('[turbolinks-form] target not found for selector: ' + xhr.getResponseHeader('turbolinks-form-render-target'));
     }
   }
 
@@ -101,22 +141,35 @@ TurbolinksForm.handleResponse = function(response, renderingError) {
 //
 // PS: it is also activated on errors with code 500 or 404, so that we can know the
 //     error is happening and not that the site is unresponsive
-$(document).on("ajax:error", function(e, response) {
-  // dispatches turbolinks event
-  Turbolinks.dispatch('turbolinks:request-end', {data: {xhr: response}});
+TurbolinksForm.on(document, "ajax:error", function(e, xhr) {
+  // When using rails-ujs (instead of jquery-ujs) this handler receives a single event parameter
+  // and other parameters must be extracted from e.detail
+  // Ref: https://edgeguides.rubyonrails.org/working_with_javascript_in_rails.html#rails-ujs-event-handlers
+  if (!xhr && e.detail)
+    var xhr = e.detail[2];
 
-  // handles form error (replaces body/target only, does not touch head)
-  var isFormErrorResponse = (response.status == 422 && response.getResponseHeader('turbolinks-form-render'));
-  if (isFormErrorResponse) {
-    TurbolinksForm.handleResponse(response);
+  // Replaces whole body and whole head when a true error occurs (same behavior as turbolinks)
+  // This is done even when there is no turbolinks-form-render header (this affects all AJAX requests)
+  // because when an error occurrs this header is not added by the server
+  var isError500 = (xhr.status == 500)
+  var isError404 = (xhr.status == 404)
+  if (isError500 || isError404) {
+    console.info("Error Response handled by turbolinks-form");
+    TurbolinksForm.handleResponse(xhr, true);
     return;
   }
 
-  // replaces whole body and whole head when a true error occurs
-  var isError500 = (response.status == 500)
-  var isError404 = (response.status == 404)
-  if (isError500 || isError404) {
-    TurbolinksForm.handleResponse(response, true);
+  // does not intercept unrelated AJAX responses
+  if (!xhr || !xhr.getResponseHeader('turbolinks-form-render'))
+    return;
+
+  // dispatches turbolinks event
+  Turbolinks.dispatch('turbolinks:request-end', {data: {xhr: xhr}});
+
+  // handles form error (replaces body/target only, does not touch head)
+  var isFormErrorResponse = (xhr.status == 422);
+  if (isFormErrorResponse) {
+    TurbolinksForm.handleResponse(xhr);
     return;
   }
 });
@@ -126,18 +179,38 @@ $(document).on("ajax:error", function(e, response) {
 //  2) Response has 'turbolinks-form-render' header and 'turbolinks-form-render-when-success' header
 //
 // This handling is useful when we dont want a redirect after a successful submit
-$(document).on("ajax:success", function(e, data, status, response) {
-  // dispatches turbolinks event
-  Turbolinks.dispatch('turbolinks:request-end', {data: {xhr: response}});
+TurbolinksForm.on(document, "ajax:success", function(e, data, status, xhr) {
+  // When using rails-ujs (instead of jquery-ujs) this handler receives a single event parameter
+  // and other parameters must be extracted from e.detail
+  // Ref: https://edgeguides.rubyonrails.org/working_with_javascript_in_rails.html#rails-ujs-event-handlers
+  if (!status && e.detail)
+    var status = e.detail[1];
+  if (!xhr && e.detail)
+    var xhr = e.detail[2];
 
-  var isFormSuccessResponse = (response.status == 200 && response.getResponseHeader('turbolinks-form-render') && response.getResponseHeader('turbolinks-form-render-when-success'));
+  // does not intercept unrelated AJAX responses
+  if (!xhr || !xhr.getResponseHeader('turbolinks-form-render'))
+    return;
+
+  // dispatches turbolinks event
+  Turbolinks.dispatch('turbolinks:request-end', {data: {xhr: xhr}});
+
+  var isFormSuccessResponse = (xhr.status == 200 && xhr.getResponseHeader('turbolinks-form-render-when-success'));
   if (isFormSuccessResponse) {
-    TurbolinksForm.handleResponse(response);
+    TurbolinksForm.handleResponse(xhr);
   }
 });
 
 // Sets up event delegation to forms with data-turbolinks-form attribute
-$(document).on("ajax:beforeSend", "[data-turbolinks-form]", function(e, xhr, settings) {
+TurbolinksForm.on(document, "ajax:beforeSend", "[data-turbolinks-form]", function(e, xhr, options) {
+  // When using rails-ujs (instead of jquery-ujs) this handler receives a single event parameter
+  // and other parameters must be extracted from e.detail
+  // Ref: https://edgeguides.rubyonrails.org/working_with_javascript_in_rails.html#rails-ujs-event-handlers
+  if (!xhr)
+    var xhr = e.detail[0];
+  if (!options)
+    var options = e.detail[1];
+
   // adds the turbolinks-form-submit header for forms with data-turbolinks-form attribute being submitted,
   // so the controller knows it has to put the turbolinks-form-render header on the response
   xhr.setRequestHeader('turbolinks-form-submit', '1');
