@@ -34,12 +34,12 @@ TurbolinksForm.on = function(eventHandlerOwner, event, delegateSelector, handler
     if (delegateSelector) {
       // goes up the dom tree searching for the delegate
       var currentTarget = e.target;
-      while (!currentTarget.matches(delegateSelector) && currentTarget !== this) {
+      while (currentTarget != null && currentTarget !== this && !currentTarget.matches(delegateSelector)) {
         currentTarget = currentTarget.parentElement;
       }
 
       // if delegate found, call the handler there
-      if (currentTarget.matches(delegateSelector)) {
+      if (currentTarget != null && currentTarget.matches(delegateSelector)) {
         handler.apply(currentTarget, arguments);
       }
     }
