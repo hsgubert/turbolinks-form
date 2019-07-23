@@ -97,7 +97,7 @@ Turbolinks-form will execute any `<script>` tags that the body of the response c
 Turbolinks-form ignores Turbolinks caches. It does not populate or uses cache.
 
 #### Events
-Turbolinks-form will trigger only a subset of the (Turbolink events)[https://github.com/turbolinks/turbolinks#full-list-of-events]. Namely:
+Turbolinks-form will trigger only a subset of the [Turbolink events](https://github.com/turbolinks/turbolinks#full-list-of-events). Namely:
 
 * `turbolinks:request-start` fires before Turbolinks-form submits the form. Access the XMLHttpRequest object with `event.data.xhr`.
 
