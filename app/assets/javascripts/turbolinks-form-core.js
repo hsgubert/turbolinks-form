@@ -150,17 +150,31 @@ TurbolinksForm.on(document, "ajax:error", function(e, xhr) {
 
   // Replaces whole body and whole head when a true error occurs (same behavior as turbolinks)
   // This is done even when there is no turbolinks-form-render header (this affects all AJAX requests)
-  // because when an error occurrs this header is not added by the server
+  // because when an error occurs this header is not added by the server
   var isError500 = (xhr.status == 500)
   var isError404 = (xhr.status == 404)
   if (isError500 || isError404) {
     console.info("Error Response handled by turbolinks-form");
+    // dispatches turbolinks event
+    Turbolinks.dispatch('turbolinks:request-end', {data: {xhr: xhr}});
     TurbolinksForm.handleResponse(xhr, true);
     return;
   }
 
+  // Detects timeout to trigger the request-end event. It is up to the developer to handle
+  // the timeout on the 'turbolinks:request-end' handler
+  // Obs: for the timeout to trigger, it is up to the developer to setup the timeout on the
+  // rails-ujs or jquery-ujs (instructions: https://stackoverflow.com/questions/54464003/how-to-set-timeout-using-rails-ujs).
+  // Otherwise, the default is no timeout. 
+  // Ref: https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/readyState
+  var isTimeout = (xhr.readyState == 0 || xhr.status == 0);
+  if (isTimeout) {
+    Turbolinks.dispatch('turbolinks:request-end', {data: {xhr: xhr}});
+    return;
+  }
+
   // does not intercept unrelated AJAX responses
-  if (!xhr || !xhr.getResponseHeader('turbolinks-form-render'))
+  if (!xhr.getResponseHeader('turbolinks-form-render'))
     return;
 
   // dispatches turbolinks event
