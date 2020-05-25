@@ -30,7 +30,7 @@ TurbolinksForm.on = function(eventHandlerOwner, event, delegateSelector, handler
     delegateSelector = undefined;
   }
 
-  $(eventHandlerOwner).on(event, function(e) {
+  eventHandlerOwner.addEventListener(event, function(e) {
     if (delegateSelector) {
       // goes up the dom tree searching for the delegate
       var currentTarget = e.target;
